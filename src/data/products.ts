@@ -15,7 +15,7 @@ export const products: Product[] = [
     description: "Pan de papa, Medallón 100g x2, Cheddar, Lechuga, tomate, cebolla morada, Aderezo Tasty. Incluye papas fritas.",
     price: 13500,
     category: "Burgers",
-    image: "https://i.imgur.com/Tarragona.jpg",
+    image: "https://i.imgur.com/lrDxwzN.jpg",
   },
   {
     id: "h2",
@@ -23,7 +23,7 @@ export const products: Product[] = [
     description: "Pan de papa, Medallón 100g x2, Aros de cebolla rebozados, Panceta crocante, Aderezo mostaza dulce. Incluye papas fritas.",
     price: 14500,
     category: "Burgers",
-    image: "https://i.imgur.com/Wilcor.jpg",
+    image: "https://i.imgur.com/10uJzet.jpg",
   },
   {
     id: "h3",
@@ -31,7 +31,7 @@ export const products: Product[] = [
     description: "Pan de papa, Medallón 100g x3, Cheddar, Laminas de panceta, Mayonesa, mostaza y kétchup. Incluye papas fritas.",
     price: 15500,
     category: "Burgers",
-    image: "https://i.imgur.com/MostrameTusDientes.jpg",
+    image: "https://i.imgur.com/sT10qhk.jpg",
   },
   {
     id: "h4",
@@ -39,7 +39,7 @@ export const products: Product[] = [
     description: "Dos medallones, Cheddar, lardon de panceta, Realish, mayonesa ahumada con ciboullete. Incluye papas fritas.",
     price: 17500,
     category: "Burgers",
-    image: "https://i.imgur.com/LaAhumada8013.jpg",
+    image: "https://i.imgur.com/WIjJvK7.jpg",
   },
   {
     id: "h5",
@@ -47,7 +47,7 @@ export const products: Product[] = [
     description: "Pan de papa, Medallón 100g, Cheddar. Incluye papas fritas.",
     price: 9500,
     category: "Burgers",
-    image: "https://images.unsplash.com/photo-1520072959219-c595dc870360?q=80&w=2000&auto=format&fit=crop",
+    image: "https://i.imgur.com/lrDxwzN.jpg", // Usamos Tarragona como base si no hay foto específica
   },
   {
     id: "h6",
@@ -55,7 +55,7 @@ export const products: Product[] = [
     description: "Pan de papa, Medallón de garbanzo, hierbas y corazón de provolone, Lechuga, tomate, zanahoria, Alioli. Incluye papas fritas.",
     price: 12500,
     category: "Burgers",
-    image: "https://images.unsplash.com/photo-1585238342024-78d387f4a707?q=80&w=1780&auto=format&fit=crop",
+    image: "https://i.imgur.com/7qFIQ5T.jpg",
   },
   {
     id: "h7",
@@ -63,7 +63,7 @@ export const products: Product[] = [
     description: "2 Wilcor + 2 Tarragona + Papas fritas + Extra Cheddar + Extra Barbacoa.",
     price: 49500,
     category: "Burgers",
-    image: "https://images.unsplash.com/photo-1534790566855-4cb788d389ec?q=80&w=2070&auto=format&fit=crop",
+    image: "https://i.imgur.com/sT10qhk.jpg",
   },
 
   // BURGERS ESPECIALES
@@ -73,7 +73,7 @@ export const products: Product[] = [
     description: "Medallón de cordero 120g, Queso pasta de cabra con menta, Lechuga y Tomate, Hongos y pimiento asado, Aderezo tasty.",
     price: 19500,
     category: "Especiales",
-    image: "https://images.unsplash.com/photo-1560717789-0ac7c58ac90a?q=80&w=2070&auto=format&fit=crop",
+    image: "https://i.imgur.com/A3XoSRj.jpg",
   },
   {
     id: "e2",
@@ -81,7 +81,7 @@ export const products: Product[] = [
     description: "Pan de papa, Milanesa de entrecot apanado, Chiminesa, muzzarella y jamón, Lechuga y tomate.",
     price: 17500,
     category: "Especiales",
-    image: "https://images.unsplash.com/photo-1551782450-a2132b4ba21d?q=80&w=2069&auto=format&fit=crop",
+    image: "https://i.imgur.com/WIjJvK7.jpg",
   },
 
   // SANDWICHES
@@ -91,7 +91,7 @@ export const products: Product[] = [
     description: "Pan de papa, Tender de pollo x2, Extra muzzarella, Lechuga, tomate, cebolla morada, Aderezo Buffalo. Incluye papas fritas.",
     price: 13500,
     category: "Sandwiches",
-    image: "https://i.imgur.com/ChickenBoulevard.jpg",
+    image: "https://i.imgur.com/4rx5wHE.jpg",
   },
   {
     id: "sw2",
@@ -99,7 +99,7 @@ export const products: Product[] = [
     description: "Pan de papa, Bondiola braseada, Cebolla caramelizada, Extra muzarella, BBQ. Incluye papas fritas.",
     price: 15500,
     category: "Sandwiches",
-    image: "https://i.imgur.com/PulledPork.jpg",
+    image: "https://i.imgur.com/oXgK6F5.jpg",
   },
   {
     id: "sw3",
@@ -107,7 +107,7 @@ export const products: Product[] = [
     description: "Pan de papa, Laminas de entrecot, Cebolla caramelizada, Extra cheddar, Extra muzzarella. Incluye papas fritas.",
     price: 15500,
     category: "Sandwiches",
-    image: "https://images.unsplash.com/photo-1529006557810-274b9b2fc783?q=80&w=2076&auto=format&fit=crop",
+    image: "https://i.imgur.com/WIjJvK7.jpg",
   },
 
   // ADICIONALES
