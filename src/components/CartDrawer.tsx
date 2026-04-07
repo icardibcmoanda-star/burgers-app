@@ -18,15 +18,13 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
   const [isCheckingDelivery, setIsCheckingDelivery] = useState(false);
   const [deliveryStatus, setDeliveryStatus] = useState<"none" | "valid" | "invalid">("none");
 
-  // Simulación de chequeo de zona de entrega (basado en palabras clave o longitud de dirección)
+  // Simulación de chequeo de zona de entrega en Rosario
   const checkDeliveryZone = () => {
     if (!address) return;
     setIsCheckingDelivery(true);
-    // Simulamos un delay de red
     setTimeout(() => {
-      // Regla simple: Si la dirección tiene más de 5 caracteres, es válida.
-      // Aquí podrías integrar una API real de Google Maps.
-      setDeliveryStatus(address.length > 5 ? "valid" : "invalid");
+      // Validamos que sea una dirección razonable de Rosario
+      setDeliveryStatus(address.length > 8 ? "valid" : "invalid");
       setIsCheckingDelivery(false);
     }, 800);
   };
@@ -46,14 +44,15 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
       `*Pago:* ${paymentMethod}\n\n` +
       `*Detalle:*\n${itemsText}\n\n` +
       `*TOTAL:* $${totalPrice.toLocaleString("es-AR")}\n\n` +
-      `_Enviado desde la Web App_`;
+      `_Enviado desde Bv. Argentino 8012, Rosario_`;
 
     return encodeURIComponent(message);
   };
 
   const handleSendOrder = () => {
     if (cart.length === 0 || !customerName || !address || !paymentMethod) return;
-    const whatsappUrl = `https://wa.me/5491100000000?text=${formatWhatsAppMessage()}`;
+    // El número de Comadreja debería ir aquí
+    const whatsappUrl = `https://wa.me/5493410000000?text=${formatWhatsAppMessage()}`;
     window.open(whatsappUrl, "_blank");
     clearCart();
     onClose();
@@ -142,20 +141,20 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
 
               {/* Delivery Zone Check */}
               <div className="space-y-4 pt-4">
-                <h3 className="font-black text-[10px] uppercase tracking-[0.2em] text-neutral-400">Entrega en el Barrio</h3>
+                <h3 className="font-black text-[10px] uppercase tracking-[0.2em] text-neutral-400">Entrega desde Fisherton</h3>
                 <div className="space-y-3 p-5 bg-white rounded-[2rem] border border-neutral-100 shadow-sm relative overflow-hidden">
                   <div className="relative">
                     <MapPin className="absolute left-3 top-3 text-red-400" size={18} />
                     <input
                         type="text"
-                        placeholder="Ingresá tu calle y altura"
+                        placeholder="Tu dirección en Rosario"
                         value={address}
                         onBlur={checkDeliveryZone}
                         onChange={(e) => {
                             setAddress(e.target.value);
                             setDeliveryStatus("none");
                         }}
-                        className="w-full bg-neutral-50 border border-neutral-100 rounded-2xl pl-10 pr-4 py-3 text-sm focus:border-red-600 outline-none transition-all placeholder:text-neutral-400 text-neutral-900"
+                        className="w-full bg-neutral-50 border border-neutral-100 rounded-2xl pl-10 pr-4 py-3 text-sm focus:border-red-600 outline-none transition-all placeholder:text-neutral-400 text-neutral-900 font-bold"
                     />
                   </div>
                   
@@ -167,7 +166,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                             className="flex items-center gap-2 text-neutral-500 text-[10px] font-bold"
                         >
                             <div className="w-3 h-3 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
-                            VERIFICANDO TU DIRECCIÓN...
+                            CALCULANDO DISTANCIA DESDE BV. ARGENTINO...
                         </motion.div>
                     )}
                     {deliveryStatus === "valid" && (
@@ -177,7 +176,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                             className="bg-green-50 text-green-700 px-4 py-2 rounded-xl flex items-center gap-2 text-[10px] font-black uppercase tracking-wider"
                         >
                             <CheckCircle2 size={14} />
-                            ¡Llegamos a tu zona! Envío $500
+                            ¡Llegamos! Delivery desde Bv. Argentino 8012
                         </motion.div>
                     )}
                     {deliveryStatus === "invalid" && (
@@ -187,13 +186,25 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
                             className="bg-red-50 text-red-700 px-4 py-2 rounded-xl flex items-center gap-2 text-[10px] font-black uppercase tracking-wider"
                         >
                             <AlertCircle size={14} />
-                            Dirección no encontrada o fuera de rango
+                            Fuera de rango o dirección incompleta
                         </motion.div>
                     )}
                   </AnimatePresence>
                   
-                  <div className="mt-2 h-24 bg-neutral-100 rounded-xl overflow-hidden opacity-50 grayscale hover:grayscale-0 transition-all cursor-not-allowed">
-                     <img src="https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?q=80&w=2066&auto=format&fit=crop" className="w-full h-full object-cover" alt="Map Placeholder" />
+                  <div className="mt-2 h-32 bg-neutral-100 rounded-xl overflow-hidden relative shadow-inner border border-neutral-200">
+                     <img 
+                        src="https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?q=80&w=2066&auto=format&fit=crop" 
+                        className="w-full h-full object-cover opacity-80" 
+                        alt="Map Rosario" 
+                     />
+                     <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="bg-red-600 text-white p-2 rounded-full shadow-lg animate-bounce">
+                            <MapPin size={20} />
+                        </div>
+                     </div>
+                     <div className="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm px-2 py-1 rounded text-[8px] font-bold uppercase tracking-widest text-neutral-500">
+                        Zona: Fisherton, Rosario
+                     </div>
                   </div>
                 </div>
               </div>
