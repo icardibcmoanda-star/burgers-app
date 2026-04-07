@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useCart } from "@/context/CartContext";
-import { X, Minus, Plus, ShoppingBag, Send, CreditCard, Banknote, MapPin, AlertCircle, CheckCircle2, Store, Truck } from "lucide-react";
+import { X, Minus, Plus, ShoppingBag, Send, CreditCard, Banknote, MapPin, AlertCircle, CheckCircle2, Store, Truck, Search, Navigation } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 type CartDrawerProps = {
@@ -10,88 +10,74 @@ type CartDrawerProps = {
   onClose: () => void;
 };
 
+// Coordenadas reales de Comadreja Burgers
+const LOCAL_LAT = -32.9148;
+const LOCAL_LON = -60.7511;
+const MAX_DELIVERY_KM = 4; // Radio de entrega real en KM
+
 export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
   const { cart, totalPrice, updateQuantity, removeFromCart, updateNotes, clearCart } = useCart();
   const [customerName, setCustomerName] = useState("");
   const [address, setAddress] = useState("");
+  const [suggestions, setSuggestions] = useState<any[]>([]);
   const [deliveryMethod, setDeliveryMethod] = useState<"envio" | "retiro">("envio");
   const [paymentMethod, setPaymentMethod] = useState<"Efectivo" | "Transferencia" | "">("");
-  const [isCheckingDelivery, setIsCheckingDelivery] = useState(false);
+  const [isChecking, setIsChecking] = useState(false);
   const [deliveryStatus, setDeliveryStatus] = useState<"none" | "valid" | "invalid">("none");
 
-  // Validación REAL y RESTRINGIDA a Fisherton (Rosario)
-  const validateAddressReal = async () => {
-    if (!address || deliveryMethod === "retiro") return;
-    
-    setIsCheckingDelivery(true);
-    try {
-      const query = encodeURIComponent(`${address}, Rosario, Santa Fe, Argentina`);
-      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1&addressdetails=1`);
-      const data = await response.json();
+  // Calcular distancia real entre dos puntos (KM)
+  const calculateDistance = (lat: number, lon: number) => {
+    const R = 6371; // Radio de la Tierra
+    const dLat = (lat - LOCAL_LAT) * Math.PI / 180;
+    const dLon = (lon - LOCAL_LON) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(LOCAL_LAT * Math.PI / 180) * Math.cos(lat * Math.PI / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  };
 
-      if (data && data.length > 0) {
-        const lat = parseFloat(data[0].lat);
-        const lon = parseFloat(data[0].lon);
-        
-        // Coordenadas aproximadas de Bv. Argentino 8012 (Comadreja)
-        const localLat = -32.915; 
-        const localLon = -60.751;
-
-        // Cálculo de distancia simple (Haversine aproximado para distancias cortas)
-        const dist = Math.sqrt(Math.pow(lat - localLat, 2) + Math.pow(lon - localLon, 2));
-        
-        // Radio de aprox 4-5km (0.04 en grados decimales aprox)
-        const MAX_DIST = 0.04; 
-
-        if (dist < MAX_DIST) {
-          setDeliveryStatus("valid");
-        } else {
-          setDeliveryStatus("invalid");
-        }
+  // Buscar sugerencias reales mientras escribe
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(async () => {
+      if (address.length > 4 && deliveryMethod === "envio" && deliveryStatus === "none") {
+        try {
+          const query = encodeURIComponent(`${address}, Rosario, Santa Fe, Argentina`);
+          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=4&addressdetails=1`);
+          const data = await res.json();
+          setSuggestions(data);
+        } catch (e) { console.error(e); }
       } else {
-        setDeliveryStatus("invalid");
+        setSuggestions([]);
       }
-    } catch (error) {
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [address, deliveryMethod, deliveryStatus]);
+
+  const selectSuggestion = (s: any) => {
+    const lat = parseFloat(s.lat);
+    const lon = parseFloat(s.lon);
+    const distance = calculateDistance(lat, lon);
+    
+    setAddress(s.display_name.split(",")[0] + ", " + s.display_name.split(",")[1]);
+    setSuggestions([]);
+    
+    if (distance <= MAX_DELIVERY_KM) {
+      setDeliveryStatus("valid");
+    } else {
       setDeliveryStatus("invalid");
-    } finally {
-      setIsCheckingDelivery(false);
     }
   };
 
-  // Efecto para re-validar si cambia el método
-  useEffect(() => {
-    if (deliveryMethod === "retiro") {
-      setDeliveryStatus("valid");
-    } else {
-      setDeliveryStatus("none");
-    }
-  }, [deliveryMethod]);
-
   const formatWhatsAppMessage = () => {
-    const itemsText = cart
-      .map((item) => {
-        let text = `- ${item.quantity}x ${item.name} ($${(item.price * item.quantity).toLocaleString("es-AR")})`;
-        if (item.notes) text += `\n  ⚠️ NOTAS: ${item.notes}`;
-        return text;
-      })
-      .join("\n");
-
-    const message = `*NUEVO PEDIDO - COMADREJA BURGERS*\n\n` +
-      `*Cliente:* ${customerName}\n` +
-      `*Método:* ${deliveryMethod === "envio" ? "🚚 ENVÍO A DOMICILIO" : "🏪 RETIRO EN LOCAL"}\n` +
-      (deliveryMethod === "envio" ? `*Dirección:* ${address}\n` : `*Retira en:* Bv. Argentino 8012\n`) +
-      `*Pago:* ${paymentMethod}\n\n` +
-      `*Detalle:*\n${itemsText}\n\n` +
-      `*TOTAL:* $${totalPrice.toLocaleString("es-AR")}\n\n` +
-      `_Pedido enviado desde la Web App_`;
-
+    const itemsText = cart.map(i => `- ${i.quantity}x ${i.name}${i.notes ? ` (SIN: ${i.notes})` : ""}`).join("\n");
+    const message = `*NUEVO PEDIDO - COMADREJA*\n\n*Cliente:* ${customerName}\n*Método:* ${deliveryMethod === "envio" ? "ENVÍO" : "RETIRO"}\n${deliveryMethod === "envio" ? `*Dirección:* ${address}\n` : ""}*Pago:* ${paymentMethod}\n\n*Pedido:*\n${itemsText}\n\n*TOTAL:* $${totalPrice.toLocaleString("es-AR")}`;
     return encodeURIComponent(message);
   };
 
   const handleSendOrder = () => {
-    if (cart.length === 0 || !customerName || (deliveryMethod === "envio" && !address) || !paymentMethod) return;
-    const whatsappUrl = `https://wa.me/5493410000000?text=${formatWhatsAppMessage()}`;
-    window.open(whatsappUrl, "_blank");
+    window.open(`https://wa.me/5493410000000?text=${formatWhatsAppMessage()}`, "_blank");
     clearCart();
     onClose();
   };
@@ -100,203 +86,127 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-[100] flex justify-end">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={onClose} />
       
       <motion.div 
-        initial={{ x: "100%" }}
-        animate={{ x: 0 }}
-        exit={{ x: "100%" }}
-        transition={{ type: "spring", damping: 25, stiffness: 200 }}
+        initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
         className="relative w-full max-w-md h-full bg-white shadow-2xl flex flex-col"
       >
         <div className="p-6 flex items-center justify-between border-b border-neutral-100">
           <div className="flex items-center gap-2">
             <ShoppingBag className="text-red-600" />
-            <h2 className="text-xl font-black uppercase tracking-tighter text-neutral-900 italic">Tu Pedido</h2>
+            <h2 className="text-xl font-black uppercase tracking-tighter text-neutral-900 italic">Comadreja Cart</h2>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-neutral-100 rounded-full text-neutral-400 transition-colors">
-            <X size={24} />
-          </button>
+          <button onClick={onClose} className="p-2 hover:bg-neutral-100 rounded-full text-neutral-400"><X size={24} /></button>
         </div>
 
-        <div className="flex-grow overflow-y-auto p-6 space-y-8 custom-scrollbar bg-neutral-50/30">
+        <div className="flex-grow overflow-y-auto p-6 space-y-8 bg-neutral-50/30">
           {cart.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-neutral-400 gap-4 opacity-50">
-              <ShoppingBag size={80} strokeWidth={1} />
-              <p className="font-black uppercase tracking-widest text-xs italic">El carrito está vacío</p>
+            <div className="h-full flex flex-col items-center justify-center text-neutral-300 gap-4 uppercase font-black italic tracking-widest text-xs opacity-50">
+                <ShoppingBag size={80} strokeWidth={1} />
+                <p>Carrito Vacío</p>
             </div>
           ) : (
             <>
-              {/* Cart Items */}
               <div className="space-y-4">
-                <h3 className="font-black text-[10px] uppercase tracking-[0.2em] text-neutral-400">Productos Seleccionados</h3>
+                <h3 className="font-black text-[10px] uppercase tracking-[0.2em] text-neutral-400 italic">Tus Elegidos</h3>
                 {cart.map((item) => (
-                  <div key={item.id} className="flex flex-col gap-3 p-4 bg-white rounded-3xl border border-neutral-100 shadow-sm">
+                  <div key={item.id} className="p-4 bg-white rounded-[2rem] border border-neutral-100 shadow-sm space-y-3">
                     <div className="flex gap-4">
-                        <div className="relative w-16 h-16 rounded-2xl overflow-hidden flex-shrink-0 bg-neutral-100 border border-neutral-50">
-                        <img src={item.image} alt={item.name} className="object-cover w-full h-full" />
-                        </div>
-                        <div className="flex-grow flex flex-col justify-between py-0.5">
+                        <img src={item.image} className="w-14 h-14 rounded-2xl object-cover" alt="" />
+                        <div className="flex-grow flex flex-col justify-center">
                             <div className="flex justify-between items-start">
-                                <h4 className="font-black text-sm uppercase tracking-tight text-neutral-900 italic">{item.name}</h4>
-                                <span className="text-red-600 font-black text-sm italic">
-                                ${(item.price * item.quantity).toLocaleString("es-AR")}
-                                </span>
+                                <h4 className="font-black text-sm uppercase italic tracking-tighter text-neutral-900">{item.name}</h4>
+                                <span className="text-red-600 font-black text-sm">${(item.price * item.quantity).toLocaleString("es-AR")}</span>
                             </div>
-                            
-                            <div className="flex items-center justify-between mt-2">
-                                <div className="flex items-center gap-3 bg-neutral-100 px-3 py-1 rounded-full">
-                                    <button onClick={() => updateQuantity(item.id, -1)} className="text-neutral-500 hover:text-red-600 transition-colors">
-                                        <Minus size={14} />
-                                    </button>
-                                    <span className="text-xs font-black w-4 text-center text-neutral-900">{item.quantity}</span>
-                                    <button onClick={() => updateQuantity(item.id, 1)} className="text-neutral-500 hover:text-red-600 transition-colors">
-                                        <Plus size={14} />
-                                    </button>
+                            <div className="flex items-center gap-4 mt-2">
+                                <div className="flex items-center gap-3 bg-neutral-100 px-2 py-0.5 rounded-full border border-neutral-200/50">
+                                    <button onClick={() => updateQuantity(item.id, -1)} className="text-neutral-500 hover:text-red-600"><Minus size={12} /></button>
+                                    <span className="text-xs font-black text-neutral-900">{item.quantity}</span>
+                                    <button onClick={() => updateQuantity(item.id, 1)} className="text-neutral-500 hover:text-red-600"><Plus size={12} /></button>
                                 </div>
-                                <button 
-                                    onClick={() => removeFromCart(item.id)}
-                                    className="text-[10px] font-black text-neutral-300 hover:text-red-600 uppercase tracking-widest"
-                                >
-                                    Quitar
-                                </button>
+                                <button onClick={() => removeFromCart(item.id)} className="text-[9px] font-black text-neutral-300 uppercase hover:text-red-600 transition-colors">Quitar</button>
                             </div>
                         </div>
                     </div>
-                    <input
-                        type="text"
-                        placeholder="Aclaraciones (ej: sin cebolla)"
-                        value={item.notes}
-                        onChange={(e) => updateNotes(item.id, e.target.value)}
-                        className="w-full text-[10px] bg-neutral-50 border-none rounded-lg px-3 py-2 text-neutral-600 placeholder:text-neutral-400 focus:ring-1 focus:ring-red-100 outline-none"
+                    <input 
+                      type="text" placeholder="¿Algo que quieras sacarle?" 
+                      value={item.notes} onChange={(e) => updateNotes(item.id, e.target.value)}
+                      className="w-full text-[10px] bg-neutral-50 border-none rounded-xl px-4 py-2 text-neutral-600 focus:ring-1 focus:ring-red-100 outline-none italic font-medium"
                     />
                   </div>
                 ))}
               </div>
 
-              {/* Delivery Method Selector */}
               <div className="space-y-4">
-                <h3 className="font-black text-[10px] uppercase tracking-[0.2em] text-neutral-400">¿Cómo lo recibís?</h3>
+                <h3 className="font-black text-[10px] uppercase tracking-[0.2em] text-neutral-400 italic">¿Cómo te lo damos?</h3>
                 <div className="grid grid-cols-2 gap-3">
-                    <button 
-                        onClick={() => setDeliveryMethod("envio")}
-                        className={`flex flex-col items-center gap-2 py-4 rounded-3xl border-2 transition-all ${
-                            deliveryMethod === "envio" 
-                            ? "bg-red-600 border-red-600 text-white shadow-lg shadow-red-200" 
-                            : "bg-white border-neutral-100 text-neutral-400 hover:border-red-100"
-                        }`}
-                    >
-                        <Truck size={20} />
-                        <span className="text-[10px] font-black uppercase tracking-widest">Envío</span>
+                    <button onClick={() => setDeliveryMethod("envio")} className={`flex flex-col items-center gap-2 py-5 rounded-[2rem] border-2 transition-all ${deliveryMethod === "envio" ? "bg-red-600 border-red-600 text-white shadow-xl shadow-red-100" : "bg-white border-neutral-100 text-neutral-400"}`}>
+                        <Truck size={20} /><span className="text-[10px] font-black uppercase italic tracking-widest">A Domicilio</span>
                     </button>
-                    <button 
-                        onClick={() => setDeliveryMethod("retiro")}
-                        className={`flex flex-col items-center gap-2 py-4 rounded-3xl border-2 transition-all ${
-                            deliveryMethod === "retiro" 
-                            ? "bg-red-600 border-red-600 text-white shadow-lg shadow-red-200" 
-                            : "bg-white border-neutral-100 text-neutral-400 hover:border-red-100"
-                        }`}
-                    >
-                        <Store size={20} />
-                        <span className="text-[10px] font-black uppercase tracking-widest">Retiro</span>
+                    <button onClick={() => setDeliveryMethod("retiro")} className={`flex flex-col items-center gap-2 py-5 rounded-[2rem] border-2 transition-all ${deliveryMethod === "retiro" ? "bg-red-600 border-red-600 text-white shadow-xl shadow-red-100" : "bg-white border-neutral-100 text-neutral-400"}`}>
+                        <Store size={20} /><span className="text-[10px] font-black uppercase italic tracking-widest">Retiro Local</span>
                     </button>
                 </div>
               </div>
 
-              {/* Address Section (only for Envio) */}
-              <AnimatePresence>
-                {deliveryMethod === "envio" && (
-                  <motion.div 
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="space-y-4 overflow-hidden"
-                  >
-                    <h3 className="font-black text-[10px] uppercase tracking-[0.2em] text-neutral-400">Dirección en Rosario</h3>
-                    <div className="space-y-3 p-5 bg-white rounded-[2rem] border border-neutral-100 shadow-sm relative">
-                        <div className="relative">
-                            <MapPin className="absolute left-3 top-3 text-red-400" size={18} />
-                            <input
-                                type="text"
-                                placeholder="Ej: Bv. Argentino 8000"
-                                value={address}
-                                onBlur={validateAddressReal}
-                                onChange={(e) => {
-                                    setAddress(e.target.value);
-                                    setDeliveryStatus("none");
-                                }}
-                                className="w-full bg-neutral-50 border border-neutral-100 rounded-2xl pl-10 pr-4 py-3 text-sm focus:border-red-600 outline-none transition-all text-neutral-900 font-bold"
-                            />
-                        </div>
-                        
-                        {isCheckingDelivery && (
-                            <div className="flex items-center gap-2 text-neutral-500 text-[10px] font-bold">
-                                <div className="w-3 h-3 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
-                                VALIDANDO CALLE EN ROSARIO...
-                            </div>
+              {deliveryMethod === "envio" && (
+                <div className="space-y-4">
+                  <h3 className="font-black text-[10px] uppercase tracking-[0.2em] text-neutral-400 italic">Dirección en Rosario</h3>
+                  <div className="relative">
+                    <div className="relative group">
+                        <MapPin className="absolute left-4 top-4 text-red-500 z-10" size={18} />
+                        <input 
+                            type="text" placeholder="Escribí tu calle y altura..." 
+                            value={address} onChange={(e) => { setAddress(e.target.value); setDeliveryStatus("none"); }}
+                            className="w-full bg-white border-2 border-neutral-100 rounded-3xl pl-12 pr-4 py-4 text-sm font-bold focus:border-red-600 outline-none transition-all shadow-sm"
+                        />
+                    </div>
+                    
+                    <AnimatePresence>
+                        {suggestions.length > 0 && (
+                            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="absolute z-50 left-0 right-0 mt-2 bg-white rounded-3xl shadow-2xl border border-neutral-100 overflow-hidden divide-y divide-neutral-50">
+                                {suggestions.map((s, i) => (
+                                    <button key={i} onClick={() => selectSuggestion(s)} className="w-full px-6 py-4 text-left hover:bg-red-50 transition-colors flex items-center gap-3">
+                                        <Navigation size={14} className="text-red-400" />
+                                        <span className="text-xs font-bold text-neutral-700 truncate">{s.display_name}</span>
+                                    </button>
+                                ))}
+                            </motion.div>
                         )}
+                    </AnimatePresence>
+
+                    <div className="mt-3">
                         {deliveryStatus === "valid" && (
-                            <div className="bg-green-50 text-green-700 px-4 py-2 rounded-xl flex items-center gap-2 text-[10px] font-black uppercase tracking-wider">
-                                <CheckCircle2 size={14} />
-                                ¡Dirección encontrada! Zona Fisherton
+                            <div className="bg-green-50 text-green-700 p-4 rounded-2xl flex items-center gap-3 text-xs font-black uppercase italic border border-green-100">
+                                <CheckCircle2 size={16} /> ¡Llegamos! Estás en zona Fisherton
                             </div>
                         )}
                         {deliveryStatus === "invalid" && (
-                            <div className="bg-red-50 text-red-700 px-4 py-2 rounded-xl flex items-center gap-2 text-[10px] font-black uppercase tracking-wider">
-                                <AlertCircle size={14} />
-                                No encontramos esa calle en Rosario
+                            <div className="bg-red-50 text-red-700 p-4 rounded-2xl flex items-center gap-3 text-xs font-black uppercase italic border border-red-100">
+                                <AlertCircle size={16} /> Fuera de rango (Max 4km desde el local)
                             </div>
                         )}
                     </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                  </div>
+                </div>
+              )}
 
-              {/* Pickup info (only for Retiro) */}
-              <AnimatePresence>
-                {deliveryMethod === "retiro" && (
-                  <motion.div 
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="p-5 bg-red-50 rounded-[2rem] border border-red-100 flex items-start gap-4"
-                  >
-                    <Store className="text-red-600 mt-1" size={20} />
+              {deliveryMethod === "retiro" && (
+                  <div className="p-6 bg-red-600 rounded-[2.5rem] text-white shadow-xl shadow-red-100 flex items-center gap-5">
+                    <div className="bg-white/20 p-3 rounded-2xl"><Store size={24} /></div>
                     <div>
-                        <h4 className="text-red-900 font-black uppercase tracking-tighter text-sm">Punto de Retiro</h4>
-                        <p className="text-red-700 text-xs font-medium">Bv. Argentino 8012, Fisherton, Rosario.</p>
-                        <p className="text-red-600 text-[9px] font-black uppercase mt-1 italic tracking-widest">Avisamos por WhatsApp cuando esté listo</p>
+                        <h4 className="font-black uppercase italic tracking-tighter">Retiro en Comadreja</h4>
+                        <p className="text-[10px] font-bold opacity-80 uppercase tracking-widest mt-1">Bv. Argentino 8012, Fisherton</p>
                     </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                  </div>
+              )}
 
-              {/* Payment Method */}
-              <div className="space-y-4 pt-2 pb-8">
-                <h3 className="font-black text-[10px] uppercase tracking-[0.2em] text-neutral-400">¿Cómo pagás?</h3>
+              <div className="space-y-4 pb-12">
+                <h3 className="font-black text-[10px] uppercase tracking-[0.2em] text-neutral-400 italic">¿Cómo pagás?</h3>
                 <div className="grid grid-cols-2 gap-3">
-                  <button 
-                    onClick={() => setPaymentMethod("Efectivo")}
-                    className={`flex items-center justify-center gap-3 py-4 rounded-2xl border-2 font-black uppercase tracking-widest text-[10px] transition-all ${
-                        paymentMethod === "Efectivo" 
-                        ? "bg-red-600 border-red-600 text-white shadow-lg" 
-                        : "bg-white border-neutral-100 text-neutral-400 hover:border-red-100"
-                    }`}
-                  >
-                    <Banknote size={16} />
-                    Efectivo
-                  </button>
-                  <button 
-                    onClick={() => setPaymentMethod("Transferencia")}
-                    className={`flex items-center justify-center gap-3 py-4 rounded-2xl border-2 font-black uppercase tracking-widest text-[10px] transition-all ${
-                        paymentMethod === "Transferencia" 
-                        ? "bg-red-600 border-red-600 text-white shadow-lg" 
-                        : "bg-white border-neutral-100 text-neutral-400 hover:border-red-100"
-                    }`}
-                  >
-                    <CreditCard size={16} />
-                    Transferencia
-                  </button>
+                  <button onClick={() => setPaymentMethod("Efectivo")} className={`py-4 rounded-[2rem] border-2 font-black uppercase text-[10px] tracking-widest transition-all ${paymentMethod === "Efectivo" ? "bg-black border-black text-white shadow-xl" : "bg-white border-neutral-100 text-neutral-400"}`}>Efectivo</button>
+                  <button onClick={() => setPaymentMethod("Transferencia")} className={`py-4 rounded-[2rem] border-2 font-black uppercase text-[10px] tracking-widest transition-all ${paymentMethod === "Transferencia" ? "bg-black border-black text-white shadow-xl" : "bg-white border-neutral-100 text-neutral-400"}`}>Transferencia</button>
                 </div>
               </div>
             </>
@@ -304,29 +214,22 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
         </div>
 
         {cart.length > 0 && (
-          <div className="p-6 bg-white border-t border-neutral-100 shadow-[0_-10px_30px_rgba(0,0,0,0.03)] space-y-4">
-            <input
-                type="text"
-                placeholder="Tu nombre completo"
-                value={customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
-                className="w-full bg-neutral-50 border border-neutral-100 rounded-2xl px-4 py-4 text-sm font-bold focus:border-red-600 outline-none text-neutral-900 italic uppercase"
+          <div className="p-8 bg-white border-t border-neutral-100 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] space-y-4 rounded-t-[3rem]">
+            <input 
+              type="text" placeholder="TU NOMBRE COMPLETO" 
+              value={customerName} onChange={(e) => setCustomerName(e.target.value)}
+              className="w-full bg-neutral-100 border-none rounded-2xl px-6 py-4 text-sm font-black focus:ring-2 focus:ring-red-600 outline-none text-neutral-900 placeholder:text-neutral-400 italic"
             />
-            
             <div className="flex justify-between items-end mb-2">
-                <span className="text-neutral-400 font-black uppercase tracking-[0.2em] text-[10px] italic">Total final</span>
-                <span className="text-3xl font-black text-red-600 italic tracking-tighter">
-                    ${totalPrice.toLocaleString("es-AR")}
-                </span>
+                <span className="text-neutral-400 font-black uppercase text-[10px] italic tracking-widest">TOTAL A PAGAR</span>
+                <span className="text-4xl font-black text-red-600 italic tracking-tighter">${totalPrice.toLocaleString("es-AR")}</span>
             </div>
-            
-            <button
+            <button 
               onClick={handleSendOrder}
               disabled={!customerName || (deliveryMethod === "envio" && deliveryStatus !== "valid") || !paymentMethod}
-              className="w-full flex items-center justify-center gap-4 py-5 bg-neutral-900 text-white rounded-3xl font-black uppercase tracking-[0.2em] hover:bg-red-600 disabled:opacity-30 transition-all shadow-xl italic"
+              className="w-full py-5 bg-red-600 text-white rounded-3xl font-black uppercase tracking-[0.2em] italic text-sm hover:bg-black transition-all shadow-2xl shadow-red-100 disabled:opacity-20"
             >
-              <Send size={18} />
-              Confirmar Pedido
+              Pedir Ahora
             </button>
           </div>
         )}
