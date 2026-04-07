@@ -1,15 +1,19 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState } from "react";
 import { Product } from "@/data/products";
 
-type CartItem = Product & { quantity: number };
+export type CartItem = Product & { 
+  quantity: number;
+  notes?: string;
+};
 
 type CartContextType = {
   cart: CartItem[];
   addToCart: (product: Product) => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, delta: number) => void;
+  updateNotes: (productId: string, notes: string) => void;
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;
@@ -28,7 +32,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
           item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
         );
       }
-      return [...prev, { ...product, quantity: 1 }];
+      return [...prev, { ...product, quantity: 1, notes: "" }];
     });
   };
 
@@ -48,6 +52,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
   };
 
+  const updateNotes = (productId: string, notes: string) => {
+    setCart((prev) =>
+      prev.map((item) =>
+        item.id === productId ? { ...item, notes } : item
+      )
+    );
+  };
+
   const clearCart = () => setCart([]);
 
   const totalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
@@ -55,7 +67,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
     <CartContext.Provider
-      value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart, totalItems, totalPrice }}
+      value={{ cart, addToCart, removeFromCart, updateQuantity, updateNotes, clearCart, totalItems, totalPrice }}
     >
       {children}
     </CartContext.Provider>
