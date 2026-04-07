@@ -14,7 +14,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { addToCart } = useCart();
 
   return (
-    <div className="group relative flex flex-col bg-neutral-900 rounded-2xl overflow-hidden border border-neutral-800 hover:border-red-600 transition-all shadow-xl">
+    <div className="group relative flex flex-col bg-neutral-900 rounded-2xl overflow-hidden border border-neutral-800 hover:border-yellow-600 transition-all shadow-xl">
       <div className="relative aspect-square overflow-hidden">
         <Image
           src={product.image}
@@ -31,7 +31,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <h3 className="text-lg font-bold text-white leading-tight uppercase tracking-tight">
             {product.name}
           </h3>
-          <span className="text-red-500 font-extrabold text-lg">
+          <span className="text-yellow-500 font-extrabold text-lg">
             ${product.price.toLocaleString("es-AR")}
           </span>
         </div>
@@ -41,7 +41,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         
         <button
           onClick={() => addToCart(product)}
-          className="mt-auto w-full flex items-center justify-center gap-2 py-3 bg-neutral-800 text-white rounded-xl font-bold hover:bg-red-600 active:scale-[0.98] transition-all group-hover:bg-red-600/20 group-hover:border-red-600/50 border border-transparent"
+          className="mt-auto w-full flex items-center justify-center gap-2 py-3 bg-neutral-800 text-white rounded-xl font-bold hover:bg-yellow-600 active:scale-[0.98] transition-all group-hover:bg-yellow-600/20 group-hover:border-yellow-600/50 border border-transparent"
         >
           <Plus size={18} />
           AGREGAR

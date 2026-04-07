@@ -15,12 +15,12 @@ export const Header: React.FC<HeaderProps> = ({ onCartClick }) => {
     <header className="sticky top-0 z-50 flex items-center justify-between px-6 py-4 bg-black text-white shadow-md">
       <div className="flex items-center gap-2">
         <h1 className="text-2xl font-bold tracking-tighter uppercase italic">
-          Roses <span className="text-red-600">Burgers</span>
+          Comadreja <span className="text-yellow-500">Burgers</span>
         </h1>
       </div>
       <button
         onClick={onCartClick}
-        className="relative p-2 bg-red-600 rounded-full hover:bg-red-700 transition-colors"
+        className="relative p-2 bg-yellow-600 rounded-full hover:bg-yellow-700 transition-colors"
       >
         <ShoppingCart size={24} />
         {totalItems > 0 && (

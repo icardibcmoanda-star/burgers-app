@@ -39,11 +39,11 @@ export default function Home() {
         onClose={() => setIsCartOpen(false)}
       />
 
-      {/* Floating Cart Button for Mobile (Optional since it's in header) */}
+      {/* Floating Cart Button for Mobile */}
       <footer className="fixed bottom-0 left-0 right-0 p-4 flex justify-center z-30 md:hidden">
         <button
           onClick={() => setIsCartOpen(true)}
-          className="bg-red-600 text-white px-8 py-3 rounded-full font-black uppercase tracking-widest shadow-2xl active:scale-95 transition-all border-2 border-red-500"
+          className="bg-yellow-600 text-white px-8 py-3 rounded-full font-black uppercase tracking-widest shadow-2xl active:scale-95 transition-all border-2 border-yellow-500"
         >
           Ver mi pedido
         </button>
