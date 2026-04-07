@@ -15,7 +15,7 @@ export const products: Product[] = [
     description: "Pan de papa, Medallón 100g x2, Cheddar, Lechuga, tomate, cebolla morada, Aderezo Tasty. Incluye papas fritas.",
     price: 13500,
     category: "Burgers",
-    image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=1899&auto=format&fit=crop",
+    image: "https://i.imgur.com/Tarragona.jpg",
   },
   {
     id: "h2",
@@ -23,7 +23,7 @@ export const products: Product[] = [
     description: "Pan de papa, Medallón 100g x2, Aros de cebolla rebozados, Panceta crocante, Aderezo mostaza dulce. Incluye papas fritas.",
     price: 14500,
     category: "Burgers",
-    image: "https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?q=80&w=2071&auto=format&fit=crop",
+    image: "https://i.imgur.com/Wilcor.jpg",
   },
   {
     id: "h3",
@@ -31,7 +31,7 @@ export const products: Product[] = [
     description: "Pan de papa, Medallón 100g x3, Cheddar, Laminas de panceta, Mayonesa, mostaza y kétchup. Incluye papas fritas.",
     price: 15500,
     category: "Burgers",
-    image: "https://images.unsplash.com/photo-1550547660-d9450f859349?q=80&w=1965&auto=format&fit=crop",
+    image: "https://i.imgur.com/MostrameTusDientes.jpg",
   },
   {
     id: "h4",
@@ -39,7 +39,7 @@ export const products: Product[] = [
     description: "Dos medallones, Cheddar, lardon de panceta, Realish, mayonesa ahumada con ciboullete. Incluye papas fritas.",
     price: 17500,
     category: "Burgers",
-    image: "https://images.unsplash.com/photo-1521305916504-4a1121188589?q=80&w=1780&auto=format&fit=crop",
+    image: "https://i.imgur.com/LaAhumada8013.jpg",
   },
   {
     id: "h5",
@@ -91,7 +91,7 @@ export const products: Product[] = [
     description: "Pan de papa, Tender de pollo x2, Extra muzzarella, Lechuga, tomate, cebolla morada, Aderezo Buffalo. Incluye papas fritas.",
     price: 13500,
     category: "Sandwiches",
-    image: "https://images.unsplash.com/photo-1606755962773-d324e0a13086?q=80&w=1887&auto=format&fit=crop",
+    image: "https://i.imgur.com/ChickenBoulevard.jpg",
   },
   {
     id: "sw2",
@@ -99,7 +99,7 @@ export const products: Product[] = [
     description: "Pan de papa, Bondiola braseada, Cebolla caramelizada, Extra muzarella, BBQ. Incluye papas fritas.",
     price: 15500,
     category: "Sandwiches",
-    image: "https://images.unsplash.com/photo-1527324688151-0e627063f2b1?q=80&w=2070&auto=format&fit=crop",
+    image: "https://i.imgur.com/PulledPork.jpg",
   },
   {
     id: "sw3",
