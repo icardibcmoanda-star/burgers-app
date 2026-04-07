@@ -19,28 +19,40 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
   const [isCheckingDelivery, setIsCheckingDelivery] = useState(false);
   const [deliveryStatus, setDeliveryStatus] = useState<"none" | "valid" | "invalid">("none");
 
-  // Validación REAL usando la API de Nominatim (OpenStreetMap) filtrada por Rosario
+  // Validación REAL y RESTRINGIDA a Fisherton (Rosario)
   const validateAddressReal = async () => {
     if (!address || deliveryMethod === "retiro") return;
     
     setIsCheckingDelivery(true);
     try {
-      // Buscamos la dirección específicamente en Rosario, Argentina
       const query = encodeURIComponent(`${address}, Rosario, Santa Fe, Argentina`);
-      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1`);
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1&addressdetails=1`);
       const data = await response.json();
 
       if (data && data.length > 0) {
-        // Verificamos si la dirección devuelta está en Rosario (para evitar errores de búsqueda)
-        const isRosario = data[0].display_name.toLowerCase().includes("rosario");
-        setDeliveryStatus(isRosario ? "valid" : "invalid");
+        const lat = parseFloat(data[0].lat);
+        const lon = parseFloat(data[0].lon);
+        
+        // Coordenadas aproximadas de Bv. Argentino 8012 (Comadreja)
+        const localLat = -32.915; 
+        const localLon = -60.751;
+
+        // Cálculo de distancia simple (Haversine aproximado para distancias cortas)
+        const dist = Math.sqrt(Math.pow(lat - localLat, 2) + Math.pow(lon - localLon, 2));
+        
+        // Radio de aprox 4-5km (0.04 en grados decimales aprox)
+        const MAX_DIST = 0.04; 
+
+        if (dist < MAX_DIST) {
+          setDeliveryStatus("valid");
+        } else {
+          setDeliveryStatus("invalid");
+        }
       } else {
         setDeliveryStatus("invalid");
       }
     } catch (error) {
-      console.error("Error validando dirección:", error);
-      // Fallback: si falla la API, usamos una validación básica por longitud
-      setDeliveryStatus(address.length > 10 ? "valid" : "invalid");
+      setDeliveryStatus("invalid");
     } finally {
       setIsCheckingDelivery(false);
     }
