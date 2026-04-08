@@ -77,7 +77,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose }) => {
   };
 
   const handleSendOrder = () => {
-    window.open(`https://wa.me/5493410000000?text=${formatWhatsAppMessage()}`, "_blank");
+    window.open(`https://wa.me/5493413853145?text=${formatWhatsAppMessage()}`, "_blank");
     clearCart();
     onClose();
   };
