@@ -6,8 +6,8 @@ import { CartProvider } from "@/context/CartContext";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Roses Burgers | Pedidos Online",
-  description: "Pedí tus hamburguesas favoritas directamente por WhatsApp.",
+  title: "Comadreja Burgers | Pedidos Online",
+  description: "Pedí las mejores hamburguesas de Fisherton directamente por WhatsApp.",
 };
 
 export default function RootLayout({
